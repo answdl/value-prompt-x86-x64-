@@ -11,8 +11,32 @@ const vscode = require('vscode');
 function activate(context) {
 	let x86_x64 = vscode.languages.registerHoverProvider({ scheme: '*', language: '*' }, {
 		provideHover(document, position, token) {
+
+			const text = document.getText();//获取整个文档
+			var lineArray = text.split("\r\n", position.line + 1);//将文档按换行符进行分组
+			var line = lineArray[lineArray.length - 1];//获取鼠标所在的行
+			//判断是否为单字符
+			//ascii
+			if (position.character < (line.length - 1) && position.character > 0) {//单字符 'a' 有3个符号
+				var first = line[position.character - 1];
+				var last = line[position.character + 1];
+				//Ascii
+				if (first == '\'' && last == '\'') {
+					return new vscode.Hover(show(line[position.character].charCodeAt(0)));
+				}
+			}
+
 			var range = document.getWordRangeAtPosition(position);
 			const word = document.getText(range);
+
+			if (word.length == 1 && position.character == (line.length - 1)) {
+				//Ascii
+				if (line[position.character] == '\'' && position.character >= 2 &&
+					line[position.character - 2] == '\'') {
+					return new vscode.Hover(show(line[position.character - 1].charCodeAt(0)));
+				}
+			}
+
 			if (/^0[xXhH][0-9a-fA-F]{1,}$/g.test(word) ||
 				/^[0-9a-fA-F]{1,}[hH]$/g.test(word)) {
 				// Hex
